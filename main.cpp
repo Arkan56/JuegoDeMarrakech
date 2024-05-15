@@ -7,7 +7,7 @@ const int tam = 9;
 struct Jugador
 {
     string nombre;
-    string alfombra;
+    char alfombra;
     int nAlfombras;
     int monedas;
 };
@@ -39,7 +39,49 @@ void mostrartablero(char tablero[][tam], int fil, int col)
     {
         for(int j = 0; j < col; j++)
         {
-            cout << tablero[i][j] << " ";   
+            if(tablero[i][j] == 'E')
+            {
+                cout << "-" << " ";
+            }
+            else if(tablero[i][j] == '1')
+            {
+                if(i == 8)
+                {
+                    cout << "(" << " ";    
+                }
+                else{
+                    cout << ")" << " ";
+                }
+            }
+            else if(tablero[i][j] == '2')
+            {
+                if(i == 7)
+                {
+                    cout << ")" << " ";    
+                }
+                else{
+                    cout << "(" << " ";
+                }
+            }
+            else if(tablero[i][j] == '3')
+            {
+                cout << "(" << " ";
+            }
+            else if(tablero[i][j] == '4')
+            {
+                cout << ")" << " ";
+            }
+            else if(tablero[i][j] == '5')
+            {
+                cout << "_" << " ";
+            }
+            else if(tablero[i][j] == '6')
+            {
+                cout << '_' << " ";
+            }
+            else{
+                cout << tablero[i][j] << " ";
+            } 
         }
         cout << endl;
     }
@@ -90,7 +132,7 @@ void moverHassam(char tablero[][tam], int fil, int col, int &posHassamFila, int 
     int nuevaColumna = posHassamColumna + (cambioColumna * dado);
 
     // Verificamos si la nueva posición está dentro del tablero
-    if (nuevaFila >= 0 && nuevaFila < fil-1 && nuevaColumna >= 0 && nuevaColumna < col-1) {
+    if (nuevaFila >= 1 && nuevaFila < fil-1 && nuevaColumna >= 1 && nuevaColumna < col-1) {
         tablero[posHassamFila][posHassamColumna] = ant;  // Borramos la posición anterior de Hassam
         posHassamFila = nuevaFila;
         posHassamColumna = nuevaColumna;
@@ -107,7 +149,6 @@ void moverHassam(char tablero[][tam], int fil, int col, int &posHassamFila, int 
             posHassamFila = 0;
             posaf = -posaf;
             posaf++;
-            cout << posaf << endl;
         } else if (nuevaFila >= fil-1) {
             posaf = posHassamFila - posaf;
             posHassamFila = fil - 1;
@@ -170,7 +211,6 @@ void posiblesAlfombras(char tablero[][tam], int phf, int phc, int posis[32][4], 
     {
         for(int j = phc-1; j <= phc+1; j++)
         {
-            cout << tablero[i][j] << " ";
             if(tablero[i][j] == '0')
             {
                 if(tablero[i-1][j] == '0' || tablero[i-1][j] == '*' || tablero[i-1][j] == '#')
@@ -207,9 +247,8 @@ void posiblesAlfombras(char tablero[][tam], int phf, int phc, int posis[32][4], 
                 }
             }
         }
-        cout << endl;
     }
-    cout << nposis << endl;
+    cout << "Numero de opciones para colocar una alfombra: " <<nposis << endl;
     for(int i = 0; i < nposis; i++)
     {
         cout << "Opcion " << i+1 << endl;
@@ -223,9 +262,50 @@ void posiblesAlfombras(char tablero[][tam], int phf, int phc, int posis[32][4], 
     }
 }
 
+bool esValido(int x, int y, char board[][tam], bool visited[][tam], char simboloJugador) {
+    return (x >= 0 && x < tam-1 && y >= 0 && y < tam-1 && board[x][y] == simboloJugador && !visited[x][y]);
+}
+
+int calculatePago(char tablero[][tam], int x, int y, char simboloJugador) {
+    // Dirección de movimientos posibles (arriba, abajo, izquierda, derecha)
+    int direcciones[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    bool visitados[tam][tam] = {false};
+    int puntos[tam * tam][2];  
+    int primero = 0, ultimo = 0;
+    
+    puntos[ultimo++][0] = x;
+    puntos[ultimo++][0] = y;  // Añadir el punto inicial
+    visitados[x][y] = true;  // Marcar el punto inicial como visitado
+    
+    int area = 1;
+    while (primero < ultimo) {
+        int p[1][2];
+        p[0][0] = puntos[primero++][0];  // Extraer el siguiente punto
+        p[0][1] = puntos[primero++][1];
+
+        area++;  // Incrementar el area de la alfombra
+        
+        // Explorar las celdas vecinas
+        for (int i = 0; i < 4; ++i) {
+            int nx = p[0][0] + direcciones[i][0];
+            int ny = p[0][1] + direcciones[i][1];
+            
+            if (esValido(nx, ny, tablero, visitados, simboloJugador)) {
+                puntos[ultimo++][0] = nx;
+                puntos[ultimo++][1] = ny;  // Añadir la celda vecina
+                visitados[nx][ny] = true;  // Marcar la celda vecina como visitada
+            }
+        }
+    }
+    
+    int costPerCarpet = 1;  // Costo fijo por cada alfombra
+    return area * costPerCarpet;
+}
+
+
 int main() {
     srand(time(nullptr)); // Semilla para la generación de números aleatorios
-
+    Jugador j1, j2;
     int fil = 9, col = 9;
     char tablero[9][tam]; 
     char ant = '0';
@@ -236,12 +316,31 @@ int main() {
 
     std::cout << "Tablero inicial:" << std::endl;
     mostrartablero(tablero, fil, col);
-
+    cout << "Ingrese el nombre del jugador 1:" << endl;
+    cin >> j1.nombre;
+    j1.alfombra = '*';
+    j1.monedas = 20;
+    j1.nAlfombras = 10;
+    cout << "Ingrese el nombre del jugador 2:" << endl;
+    cin >> j2.nombre;
+    j2.alfombra = '#';
+    j2.monedas = 20;
+    j2.nAlfombras = 10;
     // Simulamos el movimiento de Hassam
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         int posis[32][4];
         int nposis;
         int op;
+        Jugador main;
+        if(i % 2 == 0)
+        {
+            main = j1;
+        }
+        else{
+            main = j2;
+        }
+
+        cout << "Turno del jugador: " << main.nombre << endl;
         // Solicitamos al usuario la dirección a la que Hassam va a mirar
         cout << "Hassam esta mirando hacia el " << direccionActual << ". ¿Hacia donde desea girar Hassam? (D: derecha, I: izquierda, cualquier otra tecla: seguir mirando hacia donde esta): ";
         char opcion;
@@ -254,22 +353,48 @@ int main() {
         }
 
         int dado = rand() % 3 + 1;  // Simulamos el lanzamiento de un dado
+        cin.ignore();
         cout << "\nMovimiento " << i + 1 << " de Hassam: Dado = " << dado << endl;
         moverHassam(tablero, fil, col, posHassamFila, posHassamColumna, direccionActual, dado, ant);
         mostrartablero(tablero, fil, col);
         cout << endl;
-        posiblesAlfombras(tablero,posHassamFila,posHassamColumna,posis, nposis);
-        cout << "Ingrese la opcion de alfombra que desea poner" << endl;
-        cin >> op;
-        if(op > 0 && op <= nposis)
+        if(main.alfombra != ant && ant != '0')
         {
-            tablero[posis[op-1][0]][posis[op-1][1]] = '*';
-            tablero[posis[op-1][2]][posis[op-1][3]] = '*';
+            int cPagar = calculatePago(tablero,posHassamFila,posHassamColumna,ant);
+            cout << "Tiene que pagar: " << cPagar << endl;
+            if(main.monedas < cPagar)
+            {
+                cout << "El jugador: " << main.nombre << " es el perdedor" << endl;
+            }
+            else{
+                if(main.alfombra == '*')
+                {
+                    j1.monedas -= cPagar;
+                    j2.monedas += cPagar;
+                }
+                else{
+                    j2.monedas -= cPagar;
+                    j1.monedas += cPagar;
+                }
+
+            }
         }
         else{
-            cout << "Opcion invalida" << endl;
+            posiblesAlfombras(tablero,posHassamFila,posHassamColumna,posis, nposis);
+            cout << "Ingrese la opcion de alfombra que desea poner" << endl;
+            cin >> op;
+            if(op > 0 && op <= nposis)
+            {
+                tablero[posis[op-1][0]][posis[op-1][1]] = main.alfombra;
+                tablero[posis[op-1][2]][posis[op-1][3]] = main.alfombra;
+            }
+            else{
+                cout << "Opcion invalida" << endl;
+            }
         }
+        cout << endl;
         mostrartablero(tablero, fil, col);
+        cout << endl;
     }
 
     return 0;
